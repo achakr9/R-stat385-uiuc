@@ -1,0 +1,159 @@
+---
+title: "STAT 385 HW 07"
+author: "Apurva Chakravorty"
+date: "4/15/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Heart Disease Dataset**
+
+### Description of the Dataset
+
+I chose a Heart Disease dataset from Cleveland that has the following columns:
+
+ * Age (age)
+ * Sex (sex)
+ * Chest Pain (cp)
+ * Resting Blood Pressure (trestbps)
+ * Serum Cholestoral Levels (chol)
+ * Fasting blood sugar > 120 mg/dl (fbs)
+ * Resting Electrocardiographic Results (restecg)
+ * Maximum Heart Rate achieved (thalach)
+ * Exercise induced angina (exang)
+ * ST Depression Levels (oldpeak)
+ * Slope of the peak exercise: ST segment (slope)
+ * Num of Major Vessels Colored by Flourosopy (ca)
+ * Thal (thal)
+ * Diagnosis of Heart Disease (target)
+
+Names and personal information were removed from this dataset to protect privacy, and this dataset stems from a database mostly used by ML researchers. Most of these variables are numeric variables and may be changed to categorical for analysis. 
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+Understanding the data and manipulating it for the best possible data analysis:
+
+```{r}
+heart <- read.csv("https://raw.githubusercontent.com/devrepublik/data-science-course/master/data/boosting/heart.csv")
+head(heart)
+```
+
+```{r}
+dim(heart)
+summary(heart)
+```
+
+Creating a few categorical columns (in addition to numerical columns):
+
+```{r}
+heart <- heart %>%
+  mutate(agegrp = cut(age, breaks = c(28, 39, 49, 59, 69, 79), 
+                      labels = c("29-39", "40-49", "50-59", "60-69", "70-79")),
+         sexmf = cut(sex, breaks = c(-Inf, 0.5, 1), labels = c("F", "M")),
+         targetyn = cut(target, breaks = c(-Inf, 0.5, 1), labels = c("No", "Yes")),
+         fbsyn = cut(fbs, breaks = c(-Inf, 0.5, 1), labels = c("< 120", "> 120")),
+         exangyn = cut(exang, breaks = c(-Inf, 0.5, 1), labels = c("No", "Yes")),
+         cptype = cut(cp, breaks = c(-Inf, 0.5, 1.5, 2.5, 3.5), 
+                      labels = c("Typ", "Asym", "Nonang", "Nontyp")),
+         restecgcat = cut(restecg, breaks = c(-Inf, 0.5, 1.5, 2), labels = c("0", "1", "2")))
+
+head(heart)
+```
+
+
+
+#### **Question 1: What is the relationship between age and maximum heart rate achieved (thalach)?** ####
+
+```{r fig.align='center'}
+ggplot(data = heart) + 
+  geom_point(mapping = aes(x = age, y = thalach, color = sexmf)) + 
+  xlab("Age") + ylab("Max HR Acheived")
+```
+
+In the plot, we can see a slight negative linear trend for Max HR Achieved as age increases. In other words, it can be deduced that in general, as a patient ages, their maximum possible heart rate tends to decrease. 
+
+#### **Question 2: Does gender play a role in the likelihood of having heart disease?** ####
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_bar(mapping = aes(x = targetyn, fill = sexmf), position = 'dodge', width = 0.6) + 
+  xlab("Heart Disease Diagnosis") + ylab("Number of Patients")
+```
+
+In the graph above, we see the frequency of patients diagnosed with heart disease versus not diagnosed with heart disease, separated by gender. The main takeaway here is, overall a higher proportion of women were diagnosed with heart disease than men, but the total number of diagnosed patients is higher among men.
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_bar(mapping = aes(x = cptype, fill = sexmf), position = 'dodge', width = 0.6) + 
+  xlab("Chest Pain Type") + ylab("Number of Patients")
+```
+
+To understand the gender separation a little better, I graphed the chest pain tendencies of all the patients and compared by gender. Here, we can see "Typical" chest pains were most common in men, while both "Typical" and "Nonanginal" chest pains were common in women. Both genders had the least numbers of "Nontypical" chest pains.
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_bar(mapping = aes(x = cptype, fill = targetyn), position = 'dodge', width = 0.6) + 
+  xlab("Chest Pain Type") + ylab("Number of Patients")
+```
+
+Putting the information together, I compared chest pain types to whether or not the patient was diagnosed with heart disease. Those with typical chest pains tended not to have heart disease, while the other types of chest pain usually indicated a diagnosis of heart disease. The proportion of diagnosed patients was highest with "Nonanginal" chest pains which was a common chest pain in women and a less common, but still prominent chest pain in men. It can be concluded that rather than gender, chest pain is a better indicator of the presence of heart disease. 
+
+#### **Question 3: Does type of chest pain give any indication of resting blood pressure (trestbps) or maximum heart rate achieved (thalach)?** ####
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_boxplot(mapping = aes(x = cptype, y = trestbps), color = "darkred", fill = "orange") +
+  xlab("Chest Pain Type") + ylab("Resting Blood Pressure") + coord_flip()
+```
+
+The thresholds shown in the boxplot above indicate that "Nontypical" chest pains have the highest mean resting blood pressure, while "Asymptotic" chest pain has the lowest mean resting blood pressure. The highest recorded resting blood pressure however, is for a patient with "Typical" chest pain, which also shows that the variability of resting blood pressure is very high among typical chest pain patients.
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_boxplot(mapping = aes(x = cptype, y = thalach), color = "darkred", fill = "orange") +
+  xlab("Chest Pain Type") + ylab("Max HR Achieved") + coord_flip()
+```
+
+According to this boxplot, patients with "Typical" chest pains have the lowest mean maximum heart rate, but also the highest variance in the data. "Asymptotic" chest pains had the highest mean maximum heart rate and lowest variance in its data. 
+
+#### **Question 4: Is there a relationship between serum cholestoral levels (chol) and blood sugar levels (fbs) as age increases?** ####
+
+```{r fig.align='center'}
+ggplot(data = heart) + 
+  geom_point(mapping = aes(x = age, y = chol, color = fbsyn)) + 
+  xlab("Age") + ylab("Serum Cholestoral")
+```
+
+Looking at the scatterplot that compares age with serum cholestoral levels, there doesn't seem to be any particular trend with the data; age does not seem to be related to either variable, and blood sugar levels are as varied among age as serum cholestoral levels.
+
+#### **Question 5: Is there a correlation between age and recorded ST depression levels (oldpeak)? What about resting electrocardiographic results (restecg)?** ####
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_boxplot(mapping = aes(x = agegrp, y = oldpeak), color = "darkgreen", fill = "lightgreen") +
+  xlab("Age Group") + ylab("ST Depression Level") + coord_flip()
+```
+
+After dividing up the data into age groups, we can see that patients who range from ages 50-59 & 60-69 have the highest ST depression levels in their cardio tests, which may indicate higher chances of heart disease. Patients between 70-79 years old also have a significantly high threshold for ST depression levels, while patients younger than 50 years have very lower ST depression levels.
+
+```{r fig.align='center'}
+ggplot(data = heart) +
+  geom_boxplot(mapping = aes(x = restecgcat, y = oldpeak), color = "darkgreen", fill = "lightgreen") +
+  xlab("Resting Electrocardiographic Results") + ylab("ST Depression Level") + coord_flip()
+```
+
+Swapping out age groups with electrocardiographic results, we can see a clear trend that patients with an electrocardiographic result of 2 have significantly higher ST depression levels, which makes sense. 
+
+```{r}
+ggplot(data = heart) + 
+  geom_bar(mapping = aes(x = agegrp, y = oldpeak, fill = restecgcat), stat = "identity", position = 'dodge', width = 0.6) + 
+  xlab("Age Group") + ylab("ST Depression Level")
+```
+
+Lastly, this bar graph compares ST Depression levels and Electrocardiographic results by age group (for a different way of looking at the same data). An electrocardiographic result of 2 only surfaces for patients in age ranges 50-59 & 70-79, and ST depression levels were highest for age ranges 50-59 & 60-69, which confirms what we saw in the first boxplot. We can loosely deduce that increasing age is correlated to an increased chance of higher electrocardiographic results and higher ST depression levels.

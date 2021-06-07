@@ -1,0 +1,205 @@
+---
+title: "STAT 385 - Homework 5"
+author: "Apurva Chakravorty - achakr9"
+date: "Due 11:59 PM, 3/24/2020"
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+***
+
+## Submit your homework
+
+Make sure you check the following requirements when submitting your homework:
+
+- Put your name - your NetID as the author info at the top of the Rmd file.
+- After pushing the latest commit to Git, check if the changes are reflected on [github.com](https://github.com/).
+
+Failure to meet the above requirements will negatively impact your grade.
+
+***
+
+## Dataset: 2015 Flight Delays and Cancellations Data
+
+In this homework, we take a quick look at the 2015 Flight Delays and Cancellations Data provided by the U.S. Department of Transportation. This is a huge dataset availalbe on [Kaggle](https://www.kaggle.com/usdot/flight-delays#airports.csv). But for us, we will only take a look at flights **flying out** from O'Hare International Airport (ORD) in January, 2015.
+
+### Load data
+
+- I have filtered out the data specific to O'Hare and stored it in `ohare_jan.csv`. This filtered data is available at the URL: https://nkha149.github.io/stat385-sp2020/files/data/ohare_jan.csv.
+
+```{r message=FALSE}
+library(tidyverse)
+flights <- read_csv(file = "https://nkha149.github.io/stat385-sp2020/files/data/ohare_jan.csv")
+```
+
+- Write the code to print out the number of variables (columns) and the number of observations (rows) in this dataset.
+
+```{r}
+# write your code here
+dim(flights)
+```
+
+- Use the `View()` function to take a look at the data. (Don't add any code here)
+
+***
+
+### Review Basic Functions
+
+First, let's review some basic R functions that we learned in the first half of the course.
+
+Use R code to answer the following questions:
+
+- How many different airlines fly out from O'Hare?
+
+```{r}
+# your code here
+summary(flights)
+length(unique(flights$AIRLINE))
+```
+
+- How many different airports is O'Hare connected to? (flights coming out of O'Hare go to)
+
+```{r}
+# your code here
+length(unique(flights$DESTINATION_AIRPORT))
+```
+
+- What is the average **departing delay** of flights departing O'Hare in Jan 2015?
+
+```{r}
+# your code here
+mean(flights$DEPARTURE_DELAY, na.rm = TRUE)
+```
+
+- What is the five summary statistics of the **taxi out time** of flights departing O'Hare in Jan 2015?
+
+```{r}
+# your code here
+fivenum(flights$TAXI_OUT)
+```
+
+***
+
+### `filter` function
+
+Now, we will practice the skills we recently learned in the `dplyr` package.
+
+- Print out only the flights that are going to U of I Willard Airport, `CMI`.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  filter(DESTINATION_AIRPORT == 'CMI')
+```
+
+- Print out only the flights that are going to Willard Airport on the weekends.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  filter(DESTINATION_AIRPORT == 'CMI') %>%
+  filter(DAY_OF_WEEK >= 6)
+```
+
+- Print out only the flights that are going to Willard Airport on the weekends that **are scheduled to arrive before 8:00 PM**.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  filter(DESTINATION_AIRPORT == 'CMI', DAY_OF_WEEK >= 6, SCHEDULED_ARRIVAL <= 2000)
+```
+
+***
+
+### `select` function
+
+- Of all the flights, print out only the following columns: `DESTINATION`, `DAY_OF_WEEK`, `SCHEDULED_DEPARTURE`, `DEPARTURE_TIME`, `DEPARTURE_DELAY`, `SCHEDULED_ARRIVAL`, `ARRIVAL_TIME`, `ARRIVAL_DELAY`.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  select(DESTINATION_AIRPORT, DAY_OF_WEEK, SCHEDULED_DEPARTURE, DEPARTURE_TIME, DEPARTURE_DELAY, SCHEDULED_ARRIVAL, ARRIVAL_TIME, ARRIVAL_DELAY)
+```
+
+- Of all the flights going to Willard Airport on the weekend, print out all the columns except the following ones: `AIRLINE_DELAY`, `SECURITY_DELAY`, `AIR_SYSTEM_DELAY`.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  filter(DESTINATION_AIRPORT == 'CMI') %>%
+  filter(DAY_OF_WEEK >= 6) %>%
+  select(-AIRLINE_DELAY, -SECURITY_DELAY, -AIR_SYSTEM_DELAY)
+```
+
+***
+
+### `mutate` function
+
+- Add a column that is the the ratio of the total taxing time (`TAXI_IN` and `TAXI_OUT`) and the flying time (`ELAPSED_TIME`). Name this new coumn `TAXI_RATIO`.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  mutate(TAXI_RATIO = TAXI_IN / TAXI_OUT)
+```
+
+***
+
+### `groupby` and `summarize` functions
+
+- Find the average departure delay time by destination and day of the week.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  group_by(DESTINATION_AIRPORT, DAY_OF_WEEK) %>%
+  summarise(ave_dep_delay = mean(DEPARTURE_DELAY, na.rm = TRUE))
+```
+
+- Find the median taxi out time by airline and day of the week.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  group_by(AIRLINE, DAY_OF_WEEK) %>%
+  summarise(med_taxi_out = median(TAXI_OUT, na.rm = TRUE))
+```
+
+- Find the number of canceled flights for each airline.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  group_by(AIRLINE) %>%
+  summarise(num_cancel = n_distinct(CANCELLED))
+```
+
+- Find the ratio of canceled flights and the number of scheduled flights for each airline.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  group_by(AIRLINE) %>%
+  summarise(can_sched_ratio = n_distinct(CANCELLED) / n())
+```
+
+***
+
+### `arrange` function
+
+- Of the airlines that have at least 1000 scheduled flights, find the airline with the best canceling ratio record.
+  - Make sure to remove `eval = FALSE` after your write the code!
+
+```{r}
+flights %>%
+  filter(length(CANCELLED) > 1000) %>%
+  group_by(AIRLINE) %>%
+  summarise(CANCEL_RATIO = n_distinct(CANCELLED) / n()) %>%
+  select(AIRLINE, CANCEL_RATIO) %>%
+  arrange(CANCEL_RATIO)
+```
+

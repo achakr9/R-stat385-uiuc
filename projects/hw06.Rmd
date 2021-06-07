@@ -1,0 +1,186 @@
+---
+title: "STAT 385 - Homework 6"
+author: "Apurva Chakravorty - achakr9"
+date: "Due 11:59 PM, 3/30/2020"
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+***
+
+## Submit your homework
+
+Make sure you check the following requirements when submitting your homework:
+
+- Put your name - your NetID as the author info at the top of the Rmd file.
+- After pushing the latest commit to Git, check if the changes are reflected on [github.com](https://github.com/).
+  - DO NOT directly upload to github.com! That is not how we push a commit in this class!
+
+Failure to meet the above requirements will negatively impact your grade.
+
+***
+
+## Before you start
+
+- **For all plots in this homework, you have to use the functions from the ggplot2 package**.
+  - If you use base R plotting functions, your answers will NOT be graded.
+- The maximum possible points for this homework is 70.
+  - Make sure you answer all the questions!
+
+***
+
+## Dataset: diamonds from the ggplot2 package
+
+The ggplot2 package include many interesting datasets. We looked at `mpg` in lecture this week. Now, we will explore the `diamonds` dataset. This data contains the prices and other attributes of almost 54,000 diamonds.
+
+```{r message=FALSE}
+library(tidyverse)
+str(diamonds)
+```
+
+- Run `?diamonds` to know what each variable presents.
+
+### Scatterplot
+
+- There are 4 parts to this exercise: each part worths 5 points.
+
+- **(a)** Graph a scatterplot of `price` vs `carat`.
+  - `price` as the $y$-axis and `carat` as the $x$-axis.
+  
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price), color = 'blue')
+```
+
+- **(b) With the above graph**, adjust the transparency level of ALL the points so we can see clearly where the clusters are:
+
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price, alpha = 0.1), color = 'blue')
+```
+
+- **(c) Now create a new plot**, graph a scatterplot of `price` vs `carat`, and color the points BY the quality of the cut (`cut`)!
+  - Don't change the transparency level of the points.
+
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price, color = cut, alpha = 0.1))
+```
+
+- **(d) What can you conclude based on the above graph?**
+  - **Most cuts of 1-2 carat diamonds are very good, premium or ideal. With higher carat diamonds, the quality of the cut seems to go down to fair or good. As the quality of the cut gets better, the price of the diamond goes up, even if the carat is low. For very high carat diamonds, the price is high, regardless of the quality of the cut.** 
+  
+### Boxplot
+
+- There are 3 parts to this exercise: each part worths 5 points.
+
+- **(a)** Graph a boxplot of `carat` vs `cut`.
+  - `carat` as the $y$-axis and `cut` as the $x$-axis.
+  
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_boxplot(mapping = aes(x = cut, y = carat))
+```
+
+- **(b) With the plot above**, rotate it so `cut` is on the $y$-axis and `carat` is on the $x$-axis.
+  - Make sure the plot is still a boxplot.
+  
+```{r fig.align='center'}
+ccbox <- ggplot(data = diamonds) +
+  geom_boxplot(mapping = aes(x = cut, y = carat))
+ccbox + coord_flip()
+```
+
+- **(c) With the plot from (b)**, color the boxplot dark blue.
+
+```{r fig.align='center'}
+ccbox2 <- ggplot(data = diamonds) +
+  geom_boxplot(mapping = aes(x = cut, y = carat), color = "darkblue", fill = "lightblue")
+ccbox2 + coord_flip()
+```
+
+### Histogram
+
+- There are 3 parts to this exercise: each part worths 5 points.
+
+- **(a)** Graph a histogram of `price`.
+  
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = price))
+```
+
+- **(b) With the plot above**, color the bars dark orange.
+  
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = price), color = "black", fill = "darkorange")
+```
+
+- **(c) With the plot from (b)**, change the number of bins to 50.
+
+```{r fig.align='center'}
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = price), color = "black", fill = "darkorange", bins = 50)
+```
+
+***
+
+## Dataset: 2015 Flight Delays and Cancellations Data
+
+In this exercise, we continue to work with the 2015 Flight Delays and Cancellations Data provided by the U.S. Department of Transportation. This is a huge dataset availalbe on [Kaggle](https://www.kaggle.com/usdot/flight-delays#airports.csv). But for us, we will only take a look at flights **flying out** from O'Hare International Airport (ORD) in January, 2015.
+
+### Load data
+
+- I have filtered out the data specific to O'Hare and stored it in `ohare_jan.csv`. This filtered data is available at the URL: https://nkha149.github.io/stat385-sp2020/files/data/ohare_jan.csv.
+
+```{r}
+flights <- read_csv(file = "https://nkha149.github.io/stat385-sp2020/files/data/ohare_jan.csv")
+summary(flights)
+```
+
+### Using `dplyr` and `ggplot2` together
+
+- For this exercise, you will need to:
+  - Graph a plot that can be used to answer the question.
+  - Determine the type of plot that is needed.
+  - (You might need to) Manipulate the data to get the specific information that you want.
+  
+- There are 2 parts to this exercise: each part worths 10 points.
+
+- **(a)** How does the **average** departure delay time differ among days of the week?
+
+```{r}
+depdelay <- flights %>%
+  group_by(DAY_OF_WEEK) %>%
+  summarise(avgdepdelay = mean(DEPARTURE_DELAY, na.rm = TRUE))
+
+depdelay
+```
+
+```{r}
+ggplot(data = depdelay) +
+  geom_bar(mapping = aes(x = DAY_OF_WEEK, y = avgdepdelay), stat = "identity", color = "black", fill = "darkred", width = 0.5)
+```
+
+*The average departure delay time differs throughout the week. The lowest delays occur on Saturday (Day 6) and the longest delays occur on Sunday (Day 7). Monday (Day 1) also has comparably long delays. We can look further into the number of flights per day to see how air traffic might affect delay times.*
+
+- **(b)** Airlines are grouped into different terminals. There is a belief that certain terminals have better taxing out time. How does **median** taxi out time differ among diferrent airlines?
+
+```{r}
+termtaxi <- flights %>%
+  group_by(AIRLINE) %>%
+  summarise(medtaxiout = median(TAXI_OUT, na.rm = TRUE))
+termtaxi
+```
+
+```{r}
+ggplot(data = termtaxi) +
+  geom_histogram(mapping = aes(x = AIRLINE, y = medtaxiout), stat = "identity", color = "black", fill = "darkblue", width = 0.6)
+```
+
+*The mediam taxi out time differs between 14 minutes and 20 across all O'Hare airlines, with VX and AA having the lowest median times and B6 having the highest. To analyze it further, we could look at the median or average number of flights booked per airline to compare. We could also then organize by terminal to determine whether some terminals have higher medians than the others.*
